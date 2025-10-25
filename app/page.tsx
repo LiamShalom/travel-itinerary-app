@@ -46,8 +46,8 @@ export default async function HomePage() {
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   <li>Go to your Supabase project</li>
                   <li>Open the SQL Editor</li>
-                  <li>Copy and paste the contents of <code className="bg-background px-1 rounded">supabase/schema.sql</code></li>
-                  <li>Click "Run" to execute the SQL</li>
+                  <li>Copy and paste the contents of <code className="bg-background px-1 rounded">&quot;supabase/schema.sql&quot;</code></li>
+                                      <li>Click &quot;Run&quot; to execute the SQL</li>
                   <li>Refresh this page</li>
                 </ol>
               </div>
