@@ -35,51 +35,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl">🧳 TravelTrack</CardTitle>
-          <CardDescription>Welcome back! Sign in to continue.</CardDescription>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+      <Card className="w-full max-w-md modern-card">
+        <CardHeader className="text-center space-y-3">
+          <CardTitle className="text-3xl font-bold tracking-tight">
+            TravelTrack
+          </CardTitle>
+          <CardDescription className="text-base">
+            Welcome back. Sign in to continue.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
             {error && (
-              <div className="bg-destructive/10 text-destructive px-4 py-2 rounded text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
-            
+
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-medium mb-2">Email</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
+                className="modern-input w-full px-4 py-2.5"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
+              <label className="block text-sm font-medium mb-2">Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
+                className="modern-input w-full px-4 py-2.5"
                 placeholder="••••••••"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="modern-btn w-full py-2.5" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
 
-            <div className="text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
+            <div className="text-center text-sm pt-2">
+              <span className="text-muted-foreground">Don&apos;t have an account?</span>{" "}
+              <Link href="/signup" className="font-medium hover:underline">
                 Sign up
               </Link>
             </div>

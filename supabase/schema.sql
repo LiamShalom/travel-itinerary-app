@@ -27,10 +27,24 @@ CREATE TABLE IF NOT EXISTS public.trips (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create subtrips table
+CREATE TABLE IF NOT EXISTS public.subtrips (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  trip_id UUID NOT NULL REFERENCES public.trips(id) ON DELETE CASCADE,
+  location TEXT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  description TEXT,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create itinerary_items table
 CREATE TABLE IF NOT EXISTS public.itinerary_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   trip_id UUID NOT NULL REFERENCES public.trips(id) ON DELETE CASCADE,
+  subtrip_id UUID REFERENCES public.subtrips(id) ON DELETE SET NULL,
   type TEXT NOT NULL CHECK (type IN ('flight', 'stay', 'activity', 'food', 'note')),
   title TEXT NOT NULL,
   location TEXT,
@@ -44,12 +58,16 @@ CREATE TABLE IF NOT EXISTS public.itinerary_items (
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_trips_user_id ON public.trips(user_id);
 CREATE INDEX IF NOT EXISTS idx_trips_dates ON public.trips(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_subtrips_trip_id ON public.subtrips(trip_id);
+CREATE INDEX IF NOT EXISTS idx_subtrips_dates ON public.subtrips(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_itinerary_items_trip_id ON public.itinerary_items(trip_id);
+CREATE INDEX IF NOT EXISTS idx_itinerary_items_subtrip_id ON public.itinerary_items(subtrip_id);
 CREATE INDEX IF NOT EXISTS idx_itinerary_items_start_time ON public.itinerary_items(start_time);
 
 -- Enable Row Level Security
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subtrips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.itinerary_items ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for users table
@@ -81,6 +99,47 @@ CREATE POLICY "Users can update own trips"
 CREATE POLICY "Users can delete own trips"
   ON public.trips FOR DELETE
   USING (auth.uid() = user_id);
+
+-- RLS Policies for subtrips table
+CREATE POLICY "Users can view own subtrips"
+  ON public.subtrips FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.trips
+      WHERE trips.id = subtrips.trip_id
+      AND trips.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert own subtrips"
+  ON public.subtrips FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.trips
+      WHERE trips.id = subtrips.trip_id
+      AND trips.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update own subtrips"
+  ON public.subtrips FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.trips
+      WHERE trips.id = subtrips.trip_id
+      AND trips.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own subtrips"
+  ON public.subtrips FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.trips
+      WHERE trips.id = subtrips.trip_id
+      AND trips.user_id = auth.uid()
+    )
+  );
 
 -- RLS Policies for itinerary_items table
 CREATE POLICY "Users can view own itinerary items"
@@ -145,5 +204,10 @@ CREATE TRIGGER update_trips_updated_at
 
 CREATE TRIGGER update_itinerary_items_updated_at
   BEFORE UPDATE ON public.itinerary_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_subtrips_updated_at
+  BEFORE UPDATE ON public.subtrips
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();

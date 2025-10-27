@@ -49,6 +49,19 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        // Tropical/Explorer theme colors
+        tropical: {
+          ocean: "#0891B2", // cyan-600
+          sky: "#38BDF8", // sky-400
+          sand: "#FDE68A", // amber-200
+          sunset: "#FB923C", // orange-400
+          coral: "#F87171", // red-400
+          palm: "#10B981", // emerald-500
+          jungle: "#059669", // emerald-600
+          lagoon: "#06B6D4", // cyan-500
+          sunrise: "#FBBF24", // amber-400
+          paradise: "#34D399", // emerald-400
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
