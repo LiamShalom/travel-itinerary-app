@@ -231,12 +231,17 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
 
   // Generate a consistent color for each destination/location with unique encoding for trips vs subtrips
   const getLocationColor = useCallback((location: string, isTrip: boolean = false, itemId?: string) => {
-    // First check if there's a custom color
+    // Special case: For main trips, always use dark grey
+    if (isTrip) {
+      return '#374151'; // Dark grey for main trip destinations
+    }
+
+    // First check if there's a custom color (for subtrips)
     if (locationColorMap.has(location)) {
       return locationColorMap.get(location)!;
     }
 
-    // Use expanded color palette for better uniqueness
+    // Use expanded color palette for better uniqueness (fallback for subtrips without custom colors)
     const colors = [
       '#3B82F6', // blue
       '#EF4444', // red

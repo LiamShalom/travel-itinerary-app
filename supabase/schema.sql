@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS public.subtrips (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   description TEXT,
+  color TEXT,
   order_index INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

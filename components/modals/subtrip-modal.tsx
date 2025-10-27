@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import LocationSelector from "@/components/ui/location-selector";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { Subtrip, Trip } from "@/lib/types/database";
+import { useTripContext } from "@/contexts/trip-context";
 
 interface SubtripModalProps {
   open: boolean;
@@ -15,14 +16,19 @@ interface SubtripModalProps {
 }
 
 const availableColors = [
-  { name: "Blue", value: "#3B82F6" },
-  { name: "Red", value: "#EF4444" },
-  { name: "Green", value: "#10B981" },
-  { name: "Amber", value: "#F59E0B" },
-  { name: "Purple", value: "#8B5CF6" },
-  { name: "Pink", value: "#EC4899" },
-  { name: "Teal", value: "#14B8A6" },
-  { name: "Orange", value: "#F97316" },
+  { name: "Red", value: "#E31A1C" },
+  { name: "Orange", value: "#FF7F00" },
+  { name: "Green", value: "#33A02C" },
+  { name: "Blue", value: "#1F78B4" },
+  { name: "Purple", value: "#6A3D9A" },
+  { name: "Brown", value: "#B15928" },
+  { name: "Light_Red", value: "#FB9a99" },
+  { name: "Light_Orange", value: "#FDBF6F" },
+  { name: "Light_Green", value: "#B2DF84" },
+  { name: "Light_Blue", value: "#A6CEE3" },
+  { name: "Light_Purple", value: "#CAB2D6" },
+  { name: "Yellow", value: "#FFFF99" },
+
 ];
 
 export default function SubtripModal({ open, onClose, trip, subtrip }: SubtripModalProps) {
@@ -34,7 +40,7 @@ export default function SubtripModal({ open, onClose, trip, subtrip }: SubtripMo
     description: subtrip?.description || "",
     color: subtrip?.color || availableColors[0].value,
   });
-  const router = useRouter();
+  const { addSubtrip, updateSubtrip } = useTripContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,21 +54,30 @@ export default function SubtripModal({ open, onClose, trip, subtrip }: SubtripMo
       order_index: subtrip?.order_index || 0,
     };
 
-    const { error } = subtrip
+    const { error, data } = subtrip
       ? await supabase
-          .from("subtrips")
-          .update(formData)
-          .eq("id", subtrip.id)
+        .from("subtrips")
+        .update(formData)
+        .eq("id", subtrip.id)
+        .select()
+        .single()
       : await supabase
-          .from("subtrips")
-          .insert([subtripData]);
+        .from("subtrips")
+        .insert([subtripData])
+        .select()
+        .single();
 
-    if (!error) {
-      router.refresh();
+    if (!error && data) {
+      // Update the context instead of router.refresh()
+      if (subtrip) {
+        updateSubtrip(subtrip.id, data);
+      } else {
+        addSubtrip(data);
+      }
       onClose();
     } else {
       console.error("Error saving subtrip:", error);
-      alert(`Error: ${error.message}`);
+      alert(`Error: ${error?.message || 'Unknown error occurred'}`);
     }
 
     setLoading(false);
@@ -85,13 +100,10 @@ export default function SubtripModal({ open, onClose, trip, subtrip }: SubtripMo
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Location</label>
-              <input
-                type="text"
-                required
+              <LocationSelector
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="modern-input w-full px-4 py-2.5"
-                placeholder="e.g., Tokyo"
+                onChange={(location) => setFormData({ ...formData, location })}
+                placeholder="Search for a specific location..."
               />
             </div>
 
@@ -124,17 +136,16 @@ export default function SubtripModal({ open, onClose, trip, subtrip }: SubtripMo
 
             <div>
               <label className="block text-sm font-medium mb-2">Color</label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1">
                 {availableColors.map((colorOption) => (
                   <button
                     key={colorOption.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, color: colorOption.value })}
-                    className={`h-12 rounded-md border-2 transition-all ${
-                      formData.color === colorOption.value
-                        ? "border-black scale-110"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
+                    className={`h-10 w-10 rounded-full border-2 transition-all hover:scale-110 ${formData.color === colorOption.value
+                      ? "border-black scale-110 shadow-lg"
+                      : "border-gray-300 hover:border-gray-400"
+                      }`}
                     style={{ backgroundColor: colorOption.value }}
                     title={colorOption.name}
                   />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import LocationSelector from "@/components/ui/location-selector";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -104,13 +105,10 @@ export default function TripModal({ open, onClose, trip }: TripModalProps) {
 
             <div>
               <label className="block text-sm font-medium mb-2">Destination</label>
-              <input
-                type="text"
-                required
+              <LocationSelector
                 value={formData.destination}
-                onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                className="modern-input w-full px-4 py-2.5"
-                placeholder="Paris, France"
+                onChange={(destination) => setFormData({ ...formData, destination })}
+                placeholder="Search for any destination worldwide..."
               />
             </div>
 

@@ -7,7 +7,7 @@ import SubtripModal from "@/components/modals/subtrip-modal";
 import { Plus, MapPin, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useTripContext } from "@/contexts/trip-context";
 
 interface TripTabsProps {
   trip: Trip;
@@ -17,11 +17,11 @@ interface TripTabsProps {
 
 type TabType = "itinerary" | "locations" | "budget" | "saved";
 
-export default function TripTabs({ trip, itineraryItems, subtrips }: TripTabsProps) {
+export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("itinerary");
   const [showSubtripModal, setShowSubtripModal] = useState(false);
   const [editingSubtrip, setEditingSubtrip] = useState<Subtrip | undefined>();
-  const router = useRouter();
+  const { subtrips, removeSubtrip } = useTripContext();
 
   const tabs = [
     { id: "itinerary" as TabType, label: "Itinerary" },
@@ -52,7 +52,8 @@ export default function TripTabs({ trip, itineraryItems, subtrips }: TripTabsPro
       .eq("id", subtripId);
 
     if (!error) {
-      router.refresh();
+      // Update the context instead of router.refresh()
+      removeSubtrip(subtripId);
     } else {
       console.error("Error deleting subtrip:", error);
       alert(`Error: ${error.message}`);
