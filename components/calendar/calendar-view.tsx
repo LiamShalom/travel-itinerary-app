@@ -19,13 +19,35 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     console.log('Calendar localizer initialized');
     return momentLocalizer(moment);
   }, []);
+  
+  // Calculate initial date based on earliest trip or current date if no trips
+  const initialDate = useMemo(() => {
+    if (trips.length === 0) {
+      return new Date();
+    }
+    
+    // Find the earliest trip start date
+    const earliestTrip = trips.reduce((earliest, trip) => {
+      const tripDate = new Date(trip.start_date);
+      const earliestDate = new Date(earliest.start_date);
+      return tripDate < earliestDate ? trip : earliest;
+    });
+    
+    return new Date(earliestTrip.start_date);
+  }, [trips]);
+  
   const [showTripModal, setShowTripModal] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(initialDate);
   const [currentView, setCurrentView] = useState<View>('month');
   const calendarWrapperRef = useRef<HTMLDivElement>(null);
 
   console.log('CalendarView rendered with', trips.length, 'trips and', itineraryItems.length, 'items');
   console.log('Current view:', currentView, 'Current date:', currentDate);
+
+  // Update currentDate when trips change or initialDate is calculated
+  useEffect(() => {
+    setCurrentDate(initialDate);
+  }, [initialDate]);
 
   useEffect(() => {
     if (calendarWrapperRef.current) {
