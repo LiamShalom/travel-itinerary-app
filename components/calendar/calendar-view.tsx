@@ -57,6 +57,18 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     setCurrentView(newView);
   };
 
+  const handleSelectSlot = (slotInfo: { start: Date; end: Date; slots: Date[]; action: string }) => {
+    console.log('Slot selected:', slotInfo);
+    
+    // If user clicks on a day (not dragging/selecting multiple days)
+    if (slotInfo.action === 'click' || slotInfo.action === 'select') {
+      // Navigate to the clicked date
+      setCurrentDate(slotInfo.start);
+      // Switch to day view
+      setCurrentView('day');
+    }
+  };
+
   const navigatePrevious = () => {
     let newDate;
     if (currentView === 'month') {
@@ -81,6 +93,13 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     setCurrentDate(newDate);
   };
 
+  // Calculate dynamic calendar height based on number of weeks
+  const calendarHeight = useMemo(() => {
+    const weeksInMonth = Math.ceil((moment(currentDate).endOf('month').date() + moment(currentDate).startOf('month').day()) / 7);
+    const baseHeightPerWeek = 80; // 80px per week since 5 weeks = 400px looks perfect
+    return weeksInMonth * baseHeightPerWeek;
+  }, [currentDate]);
+
   const CustomToolbar = () => {
     return (
       <div className="space-y-4 mb-4">
@@ -94,7 +113,12 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h3 className="text-lg font-semibold">
-            {moment(currentDate).format('MMMM YYYY')}
+            {currentView === 'day' 
+              ? moment(currentDate).format('dddd, MMMM Do, YYYY')
+              : currentView === 'week'
+              ? `Week of ${moment(currentDate).startOf('week').format('MMMM Do, YYYY')}`
+              : moment(currentDate).format('MMMM YYYY')
+            }
           </h3>
           <button
             onClick={navigateNext}
@@ -221,9 +245,9 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     return colors[Math.abs(hash) % colors.length];
   }, [locationColorMap]);
 
-  // Create a map of dates to locations (prioritize subtrips over trips)
+  // Create a map of dates to locations with metadata (prioritize subtrips over trips)
   const dateLocationMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, { location: string; isTrip: boolean; id: string }>();
 
     console.log('Building date location map...');
     console.log('Trips:', trips);
@@ -238,7 +262,11 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
       console.log(`Trip "${trip.title}": ${trip.start_date} to ${trip.end_date}, destination: ${trip.destination}`);
 
       while (current.isSameOrBefore(end, 'day')) {
-        map.set(current.format('YYYY-MM-DD'), trip.destination);
+        map.set(current.format('YYYY-MM-DD'), {
+          location: trip.destination,
+          isTrip: true,
+          id: trip.id,
+        });
         current.add(1, 'day');
       }
     });
@@ -254,7 +282,11 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
       while (current.isSameOrBefore(end, 'day')) {
         const dateStr = current.format('YYYY-MM-DD');
         console.log(`  Setting ${dateStr} to ${subtrip.location}`);
-        map.set(dateStr, subtrip.location);
+        map.set(dateStr, {
+          location: subtrip.location,
+          isTrip: false,
+          id: subtrip.id,
+        });
         current.add(1, 'day');
       }
     });
@@ -264,16 +296,26 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     return map;
   }, [trips, subtrips]);
 
-  // Custom day cell wrapper to add background colors
+  // Custom day cell wrapper to add background colors (only in month and week views)
   const dayPropGetter = (date: Date) => {
-    const dateStr = moment(date).format('YYYY-MM-DD');
-    const location = dateLocationMap.get(dateStr);
+    // Don't apply color styling in day view
+    if (currentView === 'day') {
+      return {};
+    }
 
-    if (location) {
-      const color = getLocationColor(location, false); // Always false for calendar days since we prioritize subtrips
+    const dateStr = moment(date).format('YYYY-MM-DD');
+    const locationData = dateLocationMap.get(dateStr);
+
+    if (locationData) {
+      const color = getLocationColor(locationData.location, locationData.isTrip, locationData.id);
       return {
         style: {
-          backgroundColor: `${color}15`, // 15 is hex for ~8% opacity
+          backgroundColor: `${color}40`, // 40 is hex for ~25% opacity - much more visible
+          border: `2px solid ${color}80`, // Add a border with 50% opacity for extra visibility
+          borderRadius: '4px',
+          fontWeight: 'bold' as const,
+          color: '#000', // Ensure text is readable
+          position: 'relative' as const,
         },
       };
     }
@@ -341,11 +383,13 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
           events={events}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: 600 }}
+          style={{ height: calendarHeight }}
           date={currentDate}
           view={currentView}
           onNavigate={handleNavigate}
           onView={handleViewChange}
+          onSelectSlot={handleSelectSlot}
+          selectable
           eventPropGetter={eventStyleGetter}
           dayPropGetter={dayPropGetter}
           popup

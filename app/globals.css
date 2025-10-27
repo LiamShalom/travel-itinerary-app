@@ -110,10 +110,92 @@
   color: #000;
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
+  width: calc(100% / 7); /* Consistent width with day cells */
+  box-sizing: border-box;
+  flex: 1; /* Equal flex distribution for headers */
 }
 
 .calendar-wrapper .rbc-today {
   background-color: #f3f4f6;
+}
+
+/* Enhanced day cell styling for better color visibility */
+.calendar-wrapper .rbc-date-cell {
+  position: relative;
+  height: 80px; /* Fixed height instead of min-height for consistency */
+  width: calc(100% / 7); /* Ensure exactly 1/7th width for consistent day cells */
+  transition: all 0.2s ease;
+  cursor: pointer; /* Make entire cell clickable */
+}
+
+.calendar-wrapper .rbc-date-cell:hover {
+  transform: scale(1.02);
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Make colored days more prominent */
+.calendar-wrapper .rbc-date-cell[style*="background-color"] {
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Month view specific enhancements */
+.calendar-wrapper .rbc-month-view .rbc-date-cell {
+  border: 1px solid #e5e7eb;
+  height: 80px; /* Ensure consistent height across all month views */
+  width: calc(100% / 7); /* Consistent width - exactly 1/7th of the row */
+  box-sizing: border-box; /* Include borders in width calculation */
+  cursor: pointer; /* Ensure month view cells are clickable */
+}
+
+.calendar-wrapper .rbc-month-view .rbc-date-cell:hover {
+  cursor: pointer; /* Ensure pointer cursor on hover */
+}
+
+/* Ensure proper row layout for consistent widths */
+.calendar-wrapper .rbc-month-view .rbc-month-row {
+  display: flex;
+  width: 100%;
+}
+
+.calendar-wrapper .rbc-month-view .rbc-month-row .rbc-date-cell {
+  flex: 1; /* Equal flex distribution */
+  min-width: 0; /* Allow flex items to shrink below their content size */
+}
+
+/* Ensure header row also has consistent width distribution */
+.calendar-wrapper .rbc-month-view .rbc-month-header {
+  display: flex;
+  width: 100%;
+}
+
+.calendar-wrapper .rbc-month-view .rbc-month-header .rbc-header {
+  flex: 1; /* Equal flex distribution for headers */
+}
+
+/* Make date buttons and entire cells clickable */
+.calendar-wrapper .rbc-button-link {
+  cursor: pointer !important;
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: auto !important;
+  height: auto !important;
+  text-decoration: none;
+  color: inherit;
+  z-index: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.calendar-wrapper .rbc-date-cell .rbc-button-link {
+  cursor: pointer !important;
+}
+
+.calendar-wrapper .rbc-month-view .rbc-date-cell[style*="background-color"] {
+  border-width: 2px;
+  font-weight: bold;
 }
 
 .calendar-wrapper .rbc-toolbar {
