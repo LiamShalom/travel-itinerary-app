@@ -5,16 +5,20 @@ import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Trip, ItineraryItem, Subtrip } from "@/lib/types/database";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plane, Bed, MapPin, Coffee, StickyNote, Edit, Trash2, Plus } from "lucide-react";
 import TripModal from "@/components/modals/trip-modal";
+import { Button } from "@/components/ui/button";
 
 interface CalendarViewProps {
   trips: Trip[];
   itineraryItems: ItineraryItem[];
   subtrips?: Subtrip[];
+  onEditItem?: (item: ItineraryItem) => void;
+  onDeleteItem?: (itemId: string) => void;
+  onAddItem?: (dateString: string, subtrip?: Subtrip) => void;
 }
 
-export default function CalendarView({ trips, itineraryItems, subtrips = [] }: CalendarViewProps) {
+export default function CalendarView({ trips, itineraryItems, subtrips = [], onEditItem, onDeleteItem, onAddItem }: CalendarViewProps) {
   const localizer = useMemo(() => {
     console.log('Calendar localizer initialized');
     return momentLocalizer(moment);
@@ -28,12 +32,31 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     
     // Find the earliest trip start date
     const earliestTrip = trips.reduce((earliest, trip) => {
-      const tripDate = new Date(trip.start_date);
-      const earliestDate = new Date(earliest.start_date);
-      return tripDate < earliestDate ? trip : earliest;
+      const tripDate = moment(trip.start_date);
+      const earliestDate = moment(earliest.start_date);
+      return tripDate.isBefore(earliestDate) ? trip : earliest;
     });
     
-    return new Date(earliestTrip.start_date);
+    // Parse the date string carefully to avoid timezone issues
+    console.log('Earliest trip start_date from DB:', earliestTrip.start_date);
+    
+    // If it's a date string like "2025-01-04", parse it as local date
+    if (typeof earliestTrip.start_date === 'string') {
+      const dateParts = earliestTrip.start_date.split('-');
+      if (dateParts.length === 3) {
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+        const day = parseInt(dateParts[2]);
+        const localDate = new Date(year, month, day);
+        console.log('Parsed as local date:', localDate);
+        return localDate;
+      }
+    }
+    
+    // Fallback to moment parsing
+    const tripStartDate = moment(earliestTrip.start_date).toDate();
+    console.log('Moment parsed date:', tripStartDate);
+    return tripStartDate;
   }, [trips]);
   
   const [showTripModal, setShowTripModal] = useState(false);
@@ -95,8 +118,6 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     let newDate;
     if (currentView === 'month') {
       newDate = moment(currentDate).subtract(1, 'month').toDate();
-    } else if (currentView === 'week') {
-      newDate = moment(currentDate).subtract(1, 'week').toDate();
     } else {
       newDate = moment(currentDate).subtract(1, 'day').toDate();
     }
@@ -107,8 +128,6 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     let newDate;
     if (currentView === 'month') {
       newDate = moment(currentDate).add(1, 'month').toDate();
-    } else if (currentView === 'week') {
-      newDate = moment(currentDate).add(1, 'week').toDate();
     } else {
       newDate = moment(currentDate).add(1, 'day').toDate();
     }
@@ -137,8 +156,6 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
           <h3 className="text-lg font-semibold">
             {currentView === 'day' 
               ? moment(currentDate).format('dddd, MMMM Do, YYYY')
-              : currentView === 'week'
-              ? `Week of ${moment(currentDate).startOf('week').format('MMMM Do, YYYY')}`
               : moment(currentDate).format('MMMM YYYY')
             }
           </h3>
@@ -163,19 +180,6 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
           >
             Month
             {currentView === 'month' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" />
-            )}
-          </button>
-          <button
-            onClick={() => setCurrentView('week')}
-            className={`px-4 py-2 text-sm font-medium transition-colors relative ${
-              currentView === 'week'
-                ? 'text-black'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Week
-            {currentView === 'week' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" />
             )}
           </button>
@@ -323,15 +327,18 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     return map;
   }, [trips, subtrips]);
 
-  // Custom day cell wrapper to add background colors (only in month and week views)
+  // Custom day cell wrapper to add background colors and event count badges
   const dayPropGetter = (date: Date) => {
-    // Don't apply color styling in day view
-    if (currentView === 'day') {
-      return {};
-    }
-
     const dateStr = moment(date).format('YYYY-MM-DD');
     const locationData = dateLocationMap.get(dateStr);
+    
+    // Count events for this day
+    const dayStart = moment(date).startOf('day');
+    const dayEnd = moment(date).endOf('day');
+    const eventCount = events.filter(event => {
+      const eventDate = moment(event.start);
+      return eventDate.isBetween(dayStart, dayEnd, null, '[]');
+    }).length;
 
     if (locationData) {
       const color = getLocationColor(locationData.location, locationData.isTrip, locationData.id);
@@ -344,6 +351,61 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
           color: '#000', // Ensure text is readable
           position: 'relative' as const,
         },
+        children: eventCount > 0 ? (
+          <div 
+            style={{
+              position: 'absolute',
+              top: '2px',
+              right: '2px',
+              backgroundColor: color,
+              color: 'white',
+              borderRadius: '50%',
+              width: '16px',
+              height: '16px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }}
+          >
+            {eventCount}
+          </div>
+        ) : undefined,
+      };
+    }
+
+    // For days without location data but with events, show a simple badge
+    if (eventCount > 0) {
+      return {
+        style: {
+          position: 'relative' as const,
+        },
+        children: (
+          <div 
+            style={{
+              position: 'absolute',
+              top: '2px',
+              right: '2px',
+              backgroundColor: '#6B7280',
+              color: 'white',
+              borderRadius: '50%',
+              width: '16px',
+              height: '16px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }}
+          >
+            {eventCount}
+          </div>
+        ),
       };
     }
 
@@ -397,6 +459,134 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
     return Array.from(locationMap.values());
   }, [trips, subtrips, getLocationColor]);
 
+  // Type icons for day view
+  const typeIcons = {
+    flight: { icon: Plane, color: "text-blue-600" },
+    stay: { icon: Bed, color: "text-green-600" },
+    activity: { icon: MapPin, color: "text-purple-600" },
+    food: { icon: Coffee, color: "text-orange-600" },
+    note: { icon: StickyNote, color: "text-gray-600" },
+  };
+
+  // Custom day view component
+  const CustomDayView = () => {
+    const dayStart = moment(currentDate).startOf('day');
+    const dayEnd = moment(currentDate).endOf('day');
+    
+    // Filter events for this specific day
+    const dayEvents = events.filter(event => {
+      const eventDate = moment(event.start);
+      return eventDate.isBetween(dayStart, dayEnd, null, '[]');
+    });
+
+    // Find the subtrip for this day
+    const dateStr = moment(currentDate).format('YYYY-MM-DD');
+    const currentSubtrip = subtrips.find(subtrip => {
+      const subtripStart = moment(subtrip.start_date);
+      const subtripEnd = moment(subtrip.end_date);
+      const currentDay = moment(currentDate);
+      return currentDay.isBetween(subtripStart, subtripEnd, null, '[]');
+    });
+
+    const handleAddEvent = () => {
+      // Pass the date as a string to avoid any timezone conversion issues
+      const dateString = moment(currentDate).format('YYYY-MM-DD');
+      console.log('Calendar day view - currentDate:', currentDate);
+      console.log('Calendar day view - passing dateString:', dateString);
+      if (onAddItem) {
+        onAddItem(dateString, currentSubtrip);
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        {/* Header with Add Button */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold">
+              {moment(currentDate).format('dddd, MMMM Do')}
+            </h3>
+            {currentSubtrip && (
+              <p className="text-sm text-gray-500 mt-1">
+                📍 {currentSubtrip.location}
+              </p>
+            )}
+          </div>
+          {onAddItem && (
+            <Button onClick={handleAddEvent} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add Event
+            </Button>
+          )}
+        </div>
+
+        {/* Events List */}
+        {dayEvents.length > 0 ? (
+          <div className="space-y-3">
+            {dayEvents.map((event) => {
+              const item = event.resource.data as ItineraryItem;
+              const typeConfig = typeIcons[item.type] || typeIcons.activity;
+              const TypeIcon = typeConfig.icon;
+              
+              return (
+                <div key={event.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow group">
+                  <div className="flex items-center gap-3">
+                    <TypeIcon className={`h-5 w-5 ${typeConfig.color} flex-shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
+                      {item.location && (
+                        <p className="text-sm text-gray-500 truncate">{item.location}</p>
+                      )}
+                      {item.notes && (
+                        <p className="text-sm text-gray-600 mt-1">{item.notes}</p>
+                      )}
+                    </div>
+                    {item.cost && (
+                      <div className="text-sm font-medium text-gray-900 flex-shrink-0">
+                        ${item.cost.toFixed(0)}
+                      </div>
+                    )}
+                    {(onEditItem || onDeleteItem) && (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {onEditItem && (
+                          <button
+                            onClick={() => onEditItem(item)}
+                            className="p-1.5 hover:bg-blue-50 rounded-md transition-colors"
+                          >
+                            <Edit className="h-3.5 w-3.5 text-blue-500" />
+                          </button>
+                        )}
+                        {onDeleteItem && (
+                          <button
+                            onClick={() => onDeleteItem(item.id)}
+                            className="p-1.5 hover:bg-red-50 rounded-md transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500 mb-3">No events planned for this day</p>
+            {onAddItem && (
+              <Button onClick={handleAddEvent} className="flex items-center gap-2 mx-auto">
+                <Plus className="h-4 w-4" />
+                Add Your First Event
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -405,24 +595,29 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [] }: C
 
       <div ref={calendarWrapperRef} className="modern-card p-4 calendar-wrapper">
         <CustomToolbar />
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: calendarHeight }}
-          date={currentDate}
-          view={currentView}
-          onNavigate={handleNavigate}
-          onView={handleViewChange}
-          onSelectSlot={handleSelectSlot}
-          selectable
-          eventPropGetter={eventStyleGetter}
-          dayPropGetter={dayPropGetter}
-          popup
-          views={["month", "week", "day"]}
-          toolbar={false}
-        />
+        
+        {currentView === 'day' ? (
+          <CustomDayView />
+        ) : (
+          <Calendar
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: calendarHeight }}
+            date={currentDate}
+            view={currentView}
+            onNavigate={handleNavigate}
+            onView={handleViewChange}
+            onSelectSlot={handleSelectSlot}
+            selectable
+            eventPropGetter={eventStyleGetter}
+            dayPropGetter={dayPropGetter}
+            popup
+            views={["month"]}
+            toolbar={false}
+          />
+        )}
       </div>
 
       {/* Location Legend */}

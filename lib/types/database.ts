@@ -55,6 +55,8 @@ export interface ItineraryItem {
   start_time: string;
   end_time?: string;
   notes?: string;
+  cost?: number;
+  currency?: string;
   created_at: string;
   updated_at: string;
 }
