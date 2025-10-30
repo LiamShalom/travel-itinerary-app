@@ -9,6 +9,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import TripModal from "@/components/modals/trip-modal";
+import styles from "@/styles/components/trips/trip-card.module.css";
 
 interface TripCardProps {
   trip: Trip;
@@ -47,65 +48,68 @@ export default function TripCard({ trip }: TripCardProps) {
 
   return (
     <>
-      <Card className="modern-card hover:shadow-lg transition-shadow group cursor-pointer" onClick={() => router.push(`/trips/${trip.id}`)}>
-        <CardHeader className="space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1">
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl font-bold tracking-tight line-clamp-1">
+      <Card className={styles.card} onClick={() => router.push(`/trips/${trip.id}`)}>
+        <CardHeader className={styles.header}>
+          <div className={styles.headerTop}>
+            <div className={styles.titleSection}>
+              {trip.emoji && (
+                <span className={styles.emoji}>{trip.emoji}</span>
+              )}
+              <div className={styles.titleContent}>
+                <CardTitle className={styles.title}>
                   {trip.title}
                 </CardTitle>
-                <CardDescription className="flex items-center gap-1 text-sm mt-1">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-                  <span className="line-clamp-1">{trip.destination}</span>
+                <CardDescription className={styles.destination}>
+                  <MapPin className={styles.destinationIcon} />
+                  <span className={styles.destinationText}>{trip.destination}</span>
                 </CardDescription>
               </div>
             </div>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+            <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowEditModal(true)}
-                className="hover:bg-gray-100 h-8 w-8 p-0"
+                className={`${styles.actionButton} ${styles.editButton}`}
               >
-                <Edit className="h-3.5 w-3.5" />
+                <Edit className={styles.actionIcon} />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="hover:bg-red-50 h-8 w-8 p-0"
+                className={`${styles.actionButton} ${styles.deleteButton}`}
               >
-                <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                <Trash2 className={styles.deleteIcon} />
               </Button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className={styles.statusContainer}>
             {isOngoing && (
-              <div className="inline-flex items-center gap-1.5 bg-black text-white px-2.5 py-1 rounded-md text-xs font-medium">
+              <div className={`${styles.statusBadge} ${styles.statusOngoing}`}>
                 Happening Now
               </div>
             )}
             {isUpcoming && !isOngoing && (
-              <div className="inline-flex items-center gap-1.5 bg-gray-100 text-black px-2.5 py-1 rounded-md text-xs font-medium">
+              <div className={`${styles.statusBadge} ${styles.statusUpcoming}`}>
                 Upcoming
               </div>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
+        <CardContent className={styles.content}>
+          <div className={styles.dateInfo}>
+            <Calendar className={styles.dateIcon} />
             <span>
               {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
             </span>
           </div>
 
           {trip.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className={styles.description}>
               {trip.description}
             </p>
           )}

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import LocationSelector from "@/components/ui/location-selector";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import styles from "@/styles/components/modals/trip-modal.module.css";
 
 interface TripModalProps {
   open: boolean;
@@ -68,43 +69,43 @@ export default function TripModal({ open, onClose, trip }: TripModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md modern-card">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">
+    <div className={styles.overlay}>
+      <Card className={styles.modal}>
+        <CardHeader className={styles.header}>
+          <CardTitle className={styles.title}>
             {trip ? "Edit Trip" : "Create New Trip"}
           </CardTitle>
-          <CardDescription className="text-base">
+          <CardDescription className={styles.description}>
             {trip ? "Update your travel details" : "Add a new trip to your collection"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Trip Emoji (optional)</label>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Trip Emoji (optional)</label>
               <input
                 type="text"
                 value={formData.emoji}
                 onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                className="modern-input w-full px-4 py-2.5 text-2xl text-center"
+                className={styles.emojiInput}
                 maxLength={2}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Trip Title</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Trip Title</label>
               <input
                 type="text"
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="modern-input w-full px-4 py-2.5"
+                className={styles.input}
                 placeholder="Summer in Europe"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Destination</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Destination</label>
               <LocationSelector
                 value={formData.destination}
                 onChange={(destination) => setFormData({ ...formData, destination })}
@@ -112,52 +113,55 @@ export default function TripModal({ open, onClose, trip }: TripModalProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date</label>
+            <div className={styles.dateGrid}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Start Date</label>
                 <input
                   type="date"
                   required
                   value={formData.start_date}
                   onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="modern-input w-full px-4 py-2.5"
+                  className={styles.input}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">End Date</label>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>End Date</label>
                 <input
                   type="date"
                   required
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="modern-input w-full px-4 py-2.5"
+                  className={styles.input}
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Description (optional)</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Description (optional)</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="modern-input w-full px-4 py-2.5"
+                className={styles.textarea}
                 rows={3}
                 placeholder="Add notes about your trip..."
               />
             </div>
 
-            <div className="flex gap-3 justify-end pt-4">
-              <Button
+            <div className={styles.actions}>
+              <button
                 type="button"
-                variant="outline"
                 onClick={onClose}
-                className="px-4 py-2"
+                className={styles.cancelButton}
               >
                 Cancel
-              </Button>
-              <Button type="submit" disabled={loading} className="modern-btn px-4 py-2">
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className={styles.submitButton}
+              >
                 {loading ? "Saving..." : trip ? "Update Trip" : "Create Trip"}
-              </Button>
+              </button>
             </div>
           </form>
         </CardContent>

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Trip, Subtrip, ItineraryItemType, ItineraryItem } from "@/lib/types/database";
 import { Plane, Bed, MapPin, Coffee, StickyNote, DollarSign, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar, TreePine, Palette, Heart, Clock, CheckCircle } from "lucide-react";
+import styles from "@/styles/components/modals/itinerary-modal.module.css";
 
 interface ItineraryModalProps {
   open: boolean;
@@ -20,21 +21,21 @@ interface ItineraryModalProps {
 
 // Type icons and labels
 const typeConfig = {
-  flight: { icon: Plane, label: "Flight", color: "text-blue-600" },
-  transport: { icon: Train, label: "Transport", color: "text-indigo-600" },
-  accommodation: { icon: Bed, label: "Stay", color: "text-green-600" },
-  meal: { icon: Utensils, label: "Dining", color: "text-orange-600" },
-  activity: { icon: MapPin, label: "Activity", color: "text-purple-600" },
-  landmark: { icon: Camera, label: "Landmark", color: "text-amber-600" },
-  event: { icon: Calendar, label: "Event", color: "text-red-600" },
-  local_transport: { icon: Car, label: "Local", color: "text-slate-600" },
-  shopping: { icon: ShoppingBag, label: "Shopping", color: "text-pink-600" },
-  outdoor: { icon: TreePine, label: "Outdoor", color: "text-emerald-600" },
-  museum: { icon: Building, label: "Museum", color: "text-yellow-600" },
-  wellness: { icon: Heart, label: "Wellness", color: "text-rose-600" },
-  social: { icon: Users, label: "Social", color: "text-teal-600" },
-  free_time: { icon: Clock, label: "Free", color: "text-gray-600" },
-  checkin: { icon: CheckCircle, label: "Check-in", color: "text-cyan-600" },
+  flight: { icon: Plane, label: "Flight", color: styles.iconBlue },
+  transport: { icon: Train, label: "Transport", color: styles.iconIndigo },
+  accommodation: { icon: Bed, label: "Stay", color: styles.iconGreen },
+  meal: { icon: Utensils, label: "Dining", color: styles.iconOrange },
+  activity: { icon: MapPin, label: "Activity", color: styles.iconPurple },
+  landmark: { icon: Camera, label: "Landmark", color: styles.iconAmber },
+  event: { icon: Calendar, label: "Event", color: styles.iconRed },
+  local_transport: { icon: Car, label: "Local", color: styles.iconSlate },
+  shopping: { icon: ShoppingBag, label: "Shopping", color: styles.iconPink },
+  outdoor: { icon: TreePine, label: "Outdoor", color: styles.iconEmerald },
+  museum: { icon: Building, label: "Museum", color: styles.iconYellow },
+  wellness: { icon: Heart, label: "Wellness", color: styles.iconRose },
+  social: { icon: Users, label: "Social", color: styles.iconTeal },
+  free_time: { icon: Clock, label: "Free", color: styles.iconGray },
+  checkin: { icon: CheckCircle, label: "Check-in", color: styles.iconCyan },
 };
 
 const currencies = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY"];
@@ -207,17 +208,17 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
   const TypeIcon = selectedTypeConfig.icon;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl max-h-[85vh] overflow-hidden flex flex-col">
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
         {/* Header */}
-        <div className="p-4 border-b flex-shrink-0">
-          <div className="flex items-center gap-3">
+        <div className={styles.header}>
+          <div className={styles.headerContent}>
             <TypeIcon className={`w-5 h-5 ${selectedTypeConfig.color}`} />
             <div>
-              <h2 className="text-lg font-semibold">
+              <h2 className={styles.title}>
                 {editingItem ? `Edit ${selectedTypeConfig.label}` : `Add ${selectedTypeConfig.label}`}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className={styles.description}>
                 {editingItem ? "Update your travel itinerary" : "Plan your travel itinerary"}
               </p>
             </div>
@@ -225,12 +226,12 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className={styles.content}>
+          <form onSubmit={handleSubmit} className={styles.form}>
             {/* Item Type Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Item Type</label>
-              <div className="grid grid-cols-5 gap-2">
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Item Type</label>
+              <div className={styles.typeGrid}>
                 {Object.entries(typeConfig).map(([type, config]) => {
                   const Icon = config.icon;
                   return (
@@ -238,20 +239,12 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
                       key={type}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, type: type as any }))}
-                      className={`
-                        relative p-2 rounded-lg border transition-all duration-200
-                        flex flex-col items-center gap-1 text-xs font-medium min-h-[55px]
-                        ${formData.type === type 
-                          ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
-                        }
-                      `}
+                      className={`${styles.typeButton} ${
+                        formData.type === type ? styles.typeButtonSelected : ""
+                      }`}
                     >
-                      <Icon className={`h-4 w-4 ${formData.type === type ? 'text-blue-600' : 'text-gray-400'}`} />
-                      <span className="text-center leading-tight text-[11px] font-medium">{config.label}</span>
-                      {formData.type === type && (
-                        <div className="absolute inset-0 rounded-lg ring-2 ring-blue-500 ring-opacity-50" />
-                      )}
+                      <Icon className={`${styles.typeIcon} ${config.color}`} />
+                      <span className={styles.typeLabel}>{config.label}</span>
                     </button>
                   );
                 })}
@@ -259,12 +252,12 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
             </div>
 
             {/* Trip Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Trip</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Trip</label>
               <select
                 value={formData.trip_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, trip_id: e.target.value, subtrip_id: "" }))}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className={styles.select}
                 required
               >
                 <option value="">Select a trip</option>
@@ -277,13 +270,13 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
             </div>
 
             {/* Subtrip Selection */}
-            {subtrips.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Subtrip (Optional)</label>
+            {formData.trip_id && subtrips.length > 0 && (
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Subtrip (Optional)</label>
                 <select
                   value={formData.subtrip_id}
                   onChange={(e) => setFormData(prev => ({ ...prev, subtrip_id: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  className={styles.select}
                 >
                   <option value="">Select a subtrip</option>
                   {subtrips.map((subtrip) => (
@@ -296,61 +289,61 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
             )}
 
             {/* Title */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Title</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Title</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className={styles.input}
                 placeholder={`Enter ${selectedTypeConfig.label.toLowerCase()} title`}
                 required
               />
             </div>
 
             {/* Location */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Location</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Location</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className={styles.input}
                 placeholder="Enter location"
               />
             </div>
 
             {/* Date */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Date</label>
               <input
                 type="date"
                 value={formData.start_time}
                 onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                className={styles.input}
                 required
               />
             </div>
 
             {/* Cost */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Cost</label>
+            <div className={styles.grid2}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Cost</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.cost}
                   onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  className={styles.input}
                   placeholder="0.00"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Currency</label>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Currency</label>
                 <select
                   value={formData.currency}
                   onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  className={styles.select}
                 >
                   {currencies.map((currency) => (
                     <option key={currency} value={currency}>
@@ -362,12 +355,12 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
             </div>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Notes</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md text-sm resize-none"
+                className={styles.textarea}
                 rows={2}
                 placeholder="Add any additional notes..."
               />
@@ -376,24 +369,23 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t flex gap-2 flex-shrink-0">
-          <Button
+        <div className={styles.footer}>
+          <button
             type="button"
-            variant="outline"
             onClick={onClose}
-            className="flex-1"
+            className={styles.cancelButton}
             disabled={loading}
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1"
+            className={styles.submitButton}
             disabled={loading}
           >
             {loading ? (editingItem ? "Updating..." : "Adding...") : (editingItem ? "Update Item" : "Add Item")}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

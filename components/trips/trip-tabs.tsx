@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Trip, ItineraryItem, Subtrip } from "@/lib/types/database";
 import CalendarView from "@/components/calendar/calendar-view";
+import ItineraryView from "@/components/itinerary/itinerary-view";
 import SubtripModal from "@/components/modals/subtrip-modal";
 import ItineraryModal from "@/components/modals/itinerary-modal";
 import { Plus, MapPin, Trash2, Edit, Calendar, Clock, DollarSign, Plane, Bed, Coffee, StickyNote, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar as CalendarIcon, TreePine, Heart, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useTripContext } from "@/contexts/trip-context";
 import { useRouter } from "next/navigation";
+import styles from "@/styles/components/trips/trip-tabs.module.css";
 
 interface TripTabsProps {
   trip: Trip;
@@ -21,24 +23,24 @@ type TabType = "itinerary" | "timeline" | "locations" | "budget";
 
 // Type icons for itinerary items
 const typeIcons = {
-  flight: { icon: Plane, color: "text-blue-600" },
-  stay: { icon: Bed, color: "text-green-600" },
-  activity: { icon: MapPin, color: "text-purple-600" },
-  food: { icon: Coffee, color: "text-orange-600" },
-  note: { icon: StickyNote, color: "text-gray-600" },
-  transport: { icon: Train, color: "text-indigo-600" },
-  accommodation: { icon: Bed, color: "text-green-600" },
-  meal: { icon: Utensils, color: "text-orange-600" },
-  landmark: { icon: Camera, color: "text-amber-600" },
-  event: { icon: CalendarIcon, color: "text-red-600" },
-  local_transport: { icon: Car, color: "text-slate-600" },
-  shopping: { icon: ShoppingBag, color: "text-pink-600" },
-  outdoor: { icon: TreePine, color: "text-emerald-600" },
-  museum: { icon: Building, color: "text-yellow-600" },
-  wellness: { icon: Heart, color: "text-rose-600" },
-  social: { icon: Users, color: "text-teal-600" },
-  free_time: { icon: Clock, color: "text-gray-600" },
-  checkin: { icon: CheckCircle, color: "text-cyan-600" },
+  flight: { icon: Plane, color: styles.iconBlue },
+  stay: { icon: Bed, color: styles.iconGreen },
+  activity: { icon: MapPin, color: styles.iconPurple },
+  food: { icon: Coffee, color: styles.iconOrange },
+  note: { icon: StickyNote, color: styles.iconGray },
+  transport: { icon: Train, color: styles.iconIndigo },
+  accommodation: { icon: Bed, color: styles.iconGreen },
+  meal: { icon: Utensils, color: styles.iconOrange },
+  landmark: { icon: Camera, color: styles.iconAmber },
+  event: { icon: CalendarIcon, color: styles.iconRed },
+  local_transport: { icon: Car, color: styles.iconSlate },
+  shopping: { icon: ShoppingBag, color: styles.iconPink },
+  outdoor: { icon: TreePine, color: styles.iconEmerald },
+  museum: { icon: Building, color: styles.iconYellow },
+  wellness: { icon: Heart, color: styles.iconRose },
+  social: { icon: Users, color: styles.iconTeal },
+  free_time: { icon: Clock, color: styles.iconGray },
+  checkin: { icon: CheckCircle, color: styles.iconCyan },
 };
 
 export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
@@ -55,8 +57,8 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   const router = useRouter();
 
   const tabs = [
-    { id: "itinerary" as TabType, label: "Itinerary" },
-    { id: "timeline" as TabType, label: "Timeline" },
+    { id: "itinerary" as TabType, label: "Calendar" },
+    { id: "timeline" as TabType, label: "Itinerary" },
     { id: "locations" as TabType, label: "Locations" },
     { id: "budget" as TabType, label: "Budget" },
   ];
@@ -190,122 +192,69 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={styles.container}>
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className={styles.tabNavigation}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === tab.id
-                ? "text-black"
-                : "text-gray-500 hover:text-gray-700"
+            className={`${styles.tabButton} ${
+              activeTab === tab.id ? styles.active : ""
             }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" />
+              <div className={styles.tabIndicator} />
             )}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-auto">
+      <div className={styles.tabContent}>
         {activeTab === "itinerary" && (
-          <div className="space-y-6">
-            {/* Add to Itinerary Button */}
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Itinerary</h3>
-              <Button onClick={handleAddItinerary} className="modern-btn px-4 py-2">
-                <Plus className="h-4 w-4 mr-2" />
-                Add to Itinerary
-              </Button>
+          <div className={styles.calendarContent}>
+            <div className={styles.calendarHeader}>
+              <h3 className={styles.calendarTitle}>Calendar View</h3>
             </div>
-
-            {/* Calendar View - Always show */}
-            <div className="modern-card p-4">
-              <CalendarView 
-                trips={[trip]} 
-                itineraryItems={itineraryItems} 
-                subtrips={subtrips}
-                onEditItem={handleEditItineraryItem}
-                onDeleteItem={handleDeleteItineraryItem}
-                onAddItem={handleAddItineraryFromCalendar}
-                onUpdateItem={handleUpdateItem}
-              />
-            </div>
+            <CalendarView 
+              trips={[trip]} 
+              itineraryItems={itineraryItems} 
+              subtrips={subtrips}
+              onEditItem={handleEditItineraryItem}
+              onDeleteItem={handleDeleteItineraryItem}
+              onAddItem={handleAddItineraryFromCalendar}
+              onUpdateItem={handleUpdateItem}
+            />
           </div>
         )}
         
         {activeTab === "timeline" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Timeline</h3>
-            
-            {itineraryItems.length > 0 ? (
-              <div className="space-y-3">
-                {Object.entries(groupedItems).map(([date, items]) => (
-                  <div key={date} className="modern-card p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
-                      <h4 className="font-semibold text-gray-900">
-                        {new Date(date).toLocaleDateString(undefined, { 
-                          weekday: 'long', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </h4>
-                    </div>
-                    
-                    <div className="ml-6 space-y-2">
-                      {items.map((item, index) => {
-                        const typeConfig = typeIcons[item.type];
-                        const TypeIcon = typeConfig.icon;
-                        
-                        return (
-                          <div key={item.id} className="flex items-center gap-3 text-sm group">
-                            <div className={`w-1 h-8 ${index === items.length - 1 ? 'bg-transparent' : 'bg-gray-200'} flex-shrink-0`}></div>
-                            <TypeIcon className={`h-4 w-4 ${typeConfig.color} flex-shrink-0`} />
-                            <span className="font-medium flex-1">{item.title}</span>
-                            {item.location && (
-                              <span className="text-gray-500">• {item.location}</span>
-                            )}
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleEditItineraryItem(item)}
-                                className="p-1 hover:bg-blue-50 rounded-md transition-colors"
-                              >
-                                <Edit className="h-3 w-3 text-blue-500" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteItineraryItem(item.id)}
-                                className="p-1 hover:bg-red-50 rounded-md transition-colors"
-                              >
-                                <Trash2 className="h-3 w-3 text-red-500" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="modern-card p-8 text-center">
-                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">No timeline items yet</p>
-                <p className="text-sm text-gray-500">Add items to your itinerary to see your timeline</p>
-              </div>
-            )}
+          <div className={styles.timelineContent}>
+            <div className={styles.timelineHeader}>
+              <h3 className={styles.timelineTitle}>Trip Itinerary</h3>
+              <Button onClick={handleAddItinerary} className="modern-btn px-4 py-2">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Event
+              </Button>
+            </div>
+            <ItineraryView
+              trips={[trip]}
+              itineraryItems={itineraryItems}
+              subtrips={subtrips}
+              onEditItem={handleEditItineraryItem}
+              onDeleteItem={handleDeleteItineraryItem}
+              onAddItem={handleAddItineraryFromCalendar}
+              onUpdateItem={handleUpdateItem}
+            />
           </div>
         )}
         
         {activeTab === "locations" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Trip Locations</h3>
+          <div className={styles.locationsContent}>
+            <div className={styles.locationsHeader}>
+              <h3 className={styles.locationsTitle}>Trip Locations</h3>
               <Button onClick={handleAddLocation} className="modern-btn px-4 py-2">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Location
@@ -313,31 +262,31 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
             </div>
 
             {subtrips.length > 0 ? (
-              <div className="space-y-3">
+              <div className={styles.locationsList}>
                 {subtrips.map((subtrip) => (
-                  <div key={subtrip.id} className="modern-card p-4 group">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
+                  <div key={subtrip.id} className={`${styles.modernCard} ${styles.locationCard}`}>
+                    <div className={styles.locationContent}>
+                      <div className={styles.locationInfo}>
                         <MapPin 
-                          className="h-5 w-5 mt-0.5" 
+                          className={styles.locationIcon}
                           style={{ color: subtrip.color || '#6B7280' }}
                         />
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{subtrip.location}</h4>
-                          <p className="text-sm text-muted-foreground">
+                        <div className={styles.locationDetails}>
+                          <h4 className={styles.locationName}>{subtrip.location}</h4>
+                          <p className={styles.locationDates}>
                             {new Date(subtrip.start_date).toLocaleDateString()} - {new Date(subtrip.end_date).toLocaleDateString()}
                           </p>
                           {subtrip.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{subtrip.description}</p>
+                            <p className={styles.locationDescription}>{subtrip.description}</p>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={styles.locationActions}>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditSubtrip(subtrip)}
-                          className="hover:bg-gray-100 h-8 w-8 p-0"
+                          className={`${styles.locationActionButton} ${styles.edit}`}
                         >
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
@@ -345,7 +294,7 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteSubtrip(subtrip.id)}
-                          className="hover:bg-red-50 h-8 w-8 p-0"
+                          className={`${styles.locationActionButton} ${styles.delete}`}
                         >
                           <Trash2 className="h-3.5 w-3.5 text-red-500" />
                         </Button>
@@ -355,9 +304,9 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
                 ))}
               </div>
             ) : (
-              <div className="modern-card p-8 text-center">
-                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">No locations added yet</p>
+              <div className={`${styles.modernCard} ${styles.emptyState}`}>
+                <MapPin className={styles.emptyIcon} />
+                <p className={styles.emptyTitle}>No locations added yet</p>
                 <Button onClick={handleAddLocation} className="modern-btn px-4 py-2">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Location
@@ -368,40 +317,40 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
         )}
         
         {activeTab === "budget" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Trip Budget</h3>
+          <div className={styles.budgetContent}>
+            <div className={styles.budgetHeader}>
+              <h3 className={styles.budgetTitle}>Trip Budget</h3>
               {totalCost > 0 && (
-                <div className="text-lg font-semibold text-green-600">
+                <div className={styles.budgetTotal}>
                   Total: ${totalCost.toFixed(2)}
                 </div>
               )}
             </div>
             
             {typeTotals.length > 0 ? (
-              <div className="space-y-3">
+              <div className={styles.budgetGroups}>
                 {typeTotals.map(({ type, items, total, count }) => {
                   const typeConfig = typeIcons[type as keyof typeof typeIcons] || typeIcons.activity;
                   const TypeIcon = typeConfig.icon;
                   const isExpanded = expandedBudgetGroups.has(type);
                   
                   return (
-                    <div key={type} className="modern-card overflow-hidden">
+                    <div key={type} className={`${styles.modernCard} ${styles.budgetGroup}`}>
                       <button
                         onClick={() => toggleBudgetGroup(type)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        className={styles.budgetGroupHeader}
                       >
-                        <div className="flex items-center gap-3">
-                          <TypeIcon className={`h-5 w-5 ${typeConfig.color}`} />
-                          <div className="text-left">
-                            <h5 className="font-medium capitalize">{type.replace('_', ' ')}</h5>
-                            <p className="text-sm text-gray-500">
+                        <div className={styles.budgetGroupInfo}>
+                          <TypeIcon className={`${styles.budgetIcon} ${typeConfig.color}`} />
+                          <div className={styles.budgetGroupDetails}>
+                            <h5 className={styles.budgetGroupName}>{type.replace('_', ' ')}</h5>
+                            <p className={styles.budgetGroupCount}>
                               {count} item{count !== 1 ? 's' : ''}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-lg font-semibold">
+                        <div className={styles.budgetGroupTotal}>
+                          <div className={styles.budgetAmount}>
                             ${total.toFixed(2)}
                           </div>
                           {isExpanded ? (
@@ -413,20 +362,18 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
                       </button>
                       
                       {isExpanded && (
-                        <div className="border-t bg-gray-50">
+                        <div className={styles.budgetGroupItems}>
                           {items.map((item) => (
-                            <div key={item.id} className="px-4 py-3 border-b last:border-b-0 bg-white">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h6 className="font-medium text-sm">{item.title}</h6>
-                                  <p className="text-xs text-gray-500">
-                                    {new Date(item.start_time).toLocaleDateString()}
-                                    {item.location && ` • ${item.location}`}
-                                  </p>
-                                </div>
-                                <div className="text-sm font-semibold">
-                                  ${item.cost?.toFixed(2)} {item.currency || 'USD'}
-                                </div>
+                            <div key={item.id} className={styles.budgetItem}>
+                              <div>
+                                <h6 className={styles.budgetItemName}>{item.title}</h6>
+                                <p className={styles.budgetGroupCount}>
+                                  {new Date(item.start_time).toLocaleDateString()}
+                                  {item.location && ` • ${item.location}`}
+                                </p>
+                              </div>
+                              <div className={styles.budgetItemCost}>
+                                ${item.cost?.toFixed(2)} {item.currency || 'USD'}
                               </div>
                             </div>
                           ))}
@@ -437,10 +384,10 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
                 })}
               </div>
             ) : (
-              <div className="modern-card p-8 text-center">
-                <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">No budget items yet</p>
-                <p className="text-sm text-gray-500">Add costs to your itinerary items to track your budget</p>
+              <div className={`${styles.modernCard} ${styles.emptyState}`}>
+                <DollarSign className={styles.emptyIcon} />
+                <p className={styles.emptyTitle}>No budget items yet</p>
+                <p className={styles.emptyDescription}>Add costs to your itinerary items to track your budget</p>
               </div>
             )}
           </div>
