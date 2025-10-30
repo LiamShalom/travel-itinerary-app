@@ -5,7 +5,7 @@ import { Trip, ItineraryItem, Subtrip } from "@/lib/types/database";
 import CalendarView from "@/components/calendar/calendar-view";
 import SubtripModal from "@/components/modals/subtrip-modal";
 import ItineraryModal from "@/components/modals/itinerary-modal";
-import { Plus, MapPin, Trash2, Edit, Calendar, Clock, DollarSign, Plane, Bed, Coffee, StickyNote } from "lucide-react";
+import { Plus, MapPin, Trash2, Edit, Calendar, Clock, DollarSign, Plane, Bed, Coffee, StickyNote, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar as CalendarIcon, TreePine, Heart, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useTripContext } from "@/contexts/trip-context";
@@ -26,6 +26,19 @@ const typeIcons = {
   activity: { icon: MapPin, color: "text-purple-600" },
   food: { icon: Coffee, color: "text-orange-600" },
   note: { icon: StickyNote, color: "text-gray-600" },
+  transport: { icon: Train, color: "text-indigo-600" },
+  accommodation: { icon: Bed, color: "text-green-600" },
+  meal: { icon: Utensils, color: "text-orange-600" },
+  landmark: { icon: Camera, color: "text-amber-600" },
+  event: { icon: CalendarIcon, color: "text-red-600" },
+  local_transport: { icon: Car, color: "text-slate-600" },
+  shopping: { icon: ShoppingBag, color: "text-pink-600" },
+  outdoor: { icon: TreePine, color: "text-emerald-600" },
+  museum: { icon: Building, color: "text-yellow-600" },
+  wellness: { icon: Heart, color: "text-rose-600" },
+  social: { icon: Users, color: "text-teal-600" },
+  free_time: { icon: Clock, color: "text-gray-600" },
+  checkin: { icon: CheckCircle, color: "text-cyan-600" },
 };
 
 export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
@@ -99,8 +112,6 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   };
 
   const handleDeleteItineraryItem = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-    
     const supabase = createClient();
     const { error } = await supabase
       .from("itinerary_items")

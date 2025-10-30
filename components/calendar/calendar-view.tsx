@@ -5,7 +5,7 @@ import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Trip, ItineraryItem, Subtrip } from "@/lib/types/database";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Plane, Bed, MapPin, Coffee, StickyNote, Edit, Trash2, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plane, Bed, MapPin, Coffee, StickyNote, Edit, Trash2, Plus, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar as CalendarIcon, TreePine, Palette, Heart, Clock, CheckCircle } from "lucide-react";
 import TripModal from "@/components/modals/trip-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +71,7 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
   const [showTripModal, setShowTripModal] = useState(false);
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [currentView, setCurrentView] = useState<View>('month');
+  const [dateInitialized, setDateInitialized] = useState(false);
   const calendarWrapperRef = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<ItineraryItem | null>(null);
@@ -90,10 +91,13 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
     })
   );
 
-  // Update currentDate when trips change or initialDate is calculated
+  // Update currentDate only once when component mounts or when trips first load
   useEffect(() => {
-    setCurrentDate(initialDate);
-  }, [initialDate]);
+    if (!dateInitialized && trips.length > 0) {
+      setCurrentDate(initialDate);
+      setDateInitialized(true);
+    }
+  }, [initialDate, trips.length, dateInitialized]);
 
   // Drag and drop handlers
   const handleDragStart = (event: DragStartEvent) => {
@@ -441,13 +445,13 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
     const dateStr = moment(date).format('YYYY-MM-DD');
     const locationData = dateLocationMap.get(dateStr);
     
-    // Count events for this day
+    // Get events for this day
     const dayStart = moment(date).startOf('day');
     const dayEnd = moment(date).endOf('day');
-    const eventCount = events.filter(event => {
-      const eventDate = moment(event.start);
+    const dayEvents = itineraryItems.filter(item => {
+      const eventDate = moment(item.start_time);
       return eventDate.isBetween(dayStart, dayEnd, null, '[]');
-    }).length;
+    });
 
     if (locationData) {
       const color = getLocationColor(locationData.location, locationData.isTrip, locationData.id);
@@ -460,34 +464,110 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
           color: '#000', // Ensure text is readable
           position: 'relative' as const,
         },
-        children: eventCount > 0 ? (
+        children: (
           <div 
             style={{
               position: 'absolute',
               top: '2px',
+              left: '2px',
               right: '2px',
-              backgroundColor: color,
-              color: 'white',
-              borderRadius: '50%',
-              width: '16px',
-              height: '16px',
-              fontSize: '10px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               zIndex: 10,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
             }}
           >
-            {eventCount}
+            {/* Event icons grid */}
+            {dayEvents.length > 0 && (
+              <div 
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '2px',
+                  marginBottom: '2px',
+                }}
+              >
+                {dayEvents.slice(0, 8).map((item, index) => {
+                  const typeConfig = typeIcons[item.type] || typeIcons.activity;
+                  const TypeIcon = typeConfig.icon;
+                  return (
+                    <div
+                      key={`${item.id}-${index}`}
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        cursor: 'pointer'
+                      }}
+                      title={`${item.type}: ${item.title}${item.location ? ` at ${item.location}` : ''}`}
+                    >
+                      <TypeIcon 
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          color: typeConfig.color === 'text-blue-600' ? '#2563eb' :
+                                 typeConfig.color === 'text-green-600' ? '#16a34a' :
+                                 typeConfig.color === 'text-purple-600' ? '#9333ea' :
+                                 typeConfig.color === 'text-orange-600' ? '#ea580c' :
+                                 '#4b5563'
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+                {dayEvents.length > 8 && (
+                  <div
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      borderRadius: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      fontSize: '8px',
+                      fontWeight: 'bold'
+                    }}
+                    title={`+${dayEvents.length - 8} more events`}
+                  >
+                    +{dayEvents.length - 8}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Event count badge */}
+            {dayEvents.length > 0 && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: '-2px',
+                  right: '0px',
+                  backgroundColor: color,
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '16px',
+                  height: '16px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }}
+              >
+                {dayEvents.length}
+              </div>
+            )}
           </div>
-        ) : undefined,
+        ),
       };
     }
 
-    // For days without location data but with events, show a simple badge
-    if (eventCount > 0) {
+    // For days without location data but with events, show icons and a simple badge
+    if (dayEvents.length > 0) {
       return {
         style: {
           position: 'relative' as const,
@@ -497,22 +577,94 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
             style={{
               position: 'absolute',
               top: '2px',
+              left: '2px',
               right: '2px',
-              backgroundColor: '#6B7280',
-              color: 'white',
-              borderRadius: '50%',
-              width: '16px',
-              height: '16px',
-              fontSize: '10px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               zIndex: 10,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
             }}
           >
-            {eventCount}
+            {/* Event icons grid */}
+            <div 
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '2px',
+                marginBottom: '2px',
+              }}
+            >
+              {dayEvents.slice(0, 8).map((item, index) => {
+                const typeConfig = typeIcons[item.type] || typeIcons.activity;
+                const TypeIcon = typeConfig.icon;
+                return (
+                  <div
+                    key={`${item.id}-${index}`}
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      borderRadius: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      cursor: 'pointer'
+                    }}
+                    title={`${item.type}: ${item.title}${item.location ? ` at ${item.location}` : ''}`}
+                  >
+                    <TypeIcon 
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        color: typeConfig.color === 'text-blue-600' ? '#2563eb' :
+                               typeConfig.color === 'text-green-600' ? '#16a34a' :
+                               typeConfig.color === 'text-purple-600' ? '#9333ea' :
+                               typeConfig.color === 'text-orange-600' ? '#ea580c' :
+                               '#4b5563'
+                      }}
+                    />
+                  </div>
+                );
+              })}
+              {dayEvents.length > 8 && (
+                <div
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    fontSize: '8px',
+                    fontWeight: 'bold'
+                  }}
+                  title={`+${dayEvents.length - 8} more events`}
+                >
+                  +{dayEvents.length - 8}
+                </div>
+              )}
+            </div>
+            {/* Event count badge */}
+            <div 
+              style={{
+                position: 'absolute',
+                bottom: '-2px',
+                right: '0px',
+                backgroundColor: '#6B7280',
+                color: 'white',
+                borderRadius: '50%',
+                width: '16px',
+                height: '16px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              }}
+            >
+              {dayEvents.length}
+            </div>
           </div>
         ),
       };
@@ -568,13 +720,76 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
     return Array.from(locationMap.values());
   }, [trips, subtrips, getLocationColor]);
 
-  // Type icons for day view
+  // Custom month date header component
+  const CustomDateHeader = ({ date }: { date: Date }) => {
+    const dateStr = moment(date).format('YYYY-MM-DD');
+    
+    // Get events for this day
+    const dayStart = moment(date).startOf('day');
+    const dayEnd = moment(date).endOf('day');
+    const dayEvents = itineraryItems.filter(item => {
+      const eventDate = moment(item.start_time);
+      return eventDate.isBetween(dayStart, dayEnd, null, '[]');
+    });
+
+    return (
+      <div className="relative w-full h-full">
+        {/* Day number */}
+        <span className="text-sm">{moment(date).format('D')}</span>
+        
+        {/* Event icons */}
+        {dayEvents.length > 0 && (
+          <div className="absolute top-0 left-0 right-0 mt-4 p-1">
+            <div className="flex flex-wrap" style={{ maxWidth: '100%', gap: '2px', rowGap: '0px' }}>
+              {dayEvents.slice(0, 6).map((item, index) => {
+                const typeConfig = typeIcons[item.type] || typeIcons.activity;
+                const TypeIcon = typeConfig.icon;
+                return (
+                  <div
+                    key={`${item.id}-${index}`}
+                    style={{ width: 'calc(33.333% - 2px)', padding: '1px' }} // Reduced padding
+                    title={`${item.type}: ${item.title}${item.location ? ` at ${item.location}` : ''}`}
+                  >
+                    <TypeIcon 
+                      className="w-4 h-4"
+                      style={{
+                        color: '#000000'
+                      }}
+                    />
+                  </div>
+                );
+              })}
+              {dayEvents.length > 6 && (
+                <div
+                  className="text-xs font-bold"
+                  style={{ width: 'calc(33.333% - 2px)', color: '#000000', padding: '1px' }}
+                  title={`+${dayEvents.length - 6} more events`}
+                >
+                  +{dayEvents.length - 6}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
   const typeIcons = {
     flight: { icon: Plane, color: "text-blue-600" },
-    stay: { icon: Bed, color: "text-green-600" },
+    transport: { icon: Train, color: "text-indigo-600" },
+    accommodation: { icon: Bed, color: "text-green-600" },
+    meal: { icon: Utensils, color: "text-orange-600" },
     activity: { icon: MapPin, color: "text-purple-600" },
-    food: { icon: Coffee, color: "text-orange-600" },
-    note: { icon: StickyNote, color: "text-gray-600" },
+    landmark: { icon: Camera, color: "text-amber-600" },
+    event: { icon: CalendarIcon, color: "text-red-600" },
+    local_transport: { icon: Car, color: "text-slate-600" },
+    shopping: { icon: ShoppingBag, color: "text-pink-600" },
+    outdoor: { icon: TreePine, color: "text-emerald-600" },
+    museum: { icon: Building, color: "text-yellow-600" },
+    wellness: { icon: Heart, color: "text-rose-600" },
+    social: { icon: Users, color: "text-teal-600" },
+    free_time: { icon: Clock, color: "text-gray-600" },
+    checkin: { icon: CheckCircle, color: "text-cyan-600" },
   };
 
   // Draggable item component
@@ -908,6 +1123,11 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
               popup
               views={["month"]}
               toolbar={false}
+              components={{
+                month: {
+                  dateHeader: CustomDateHeader,
+                }
+              }}
             />
           )}
         </div>

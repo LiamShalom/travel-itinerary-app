@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Trip, Subtrip, ItineraryItemType, ItineraryItem } from "@/lib/types/database";
-import { Plane, Bed, MapPin, Coffee, StickyNote, DollarSign } from "lucide-react";
+import { Plane, Bed, MapPin, Coffee, StickyNote, DollarSign, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar, TreePine, Palette, Heart, Clock, CheckCircle } from "lucide-react";
 
 interface ItineraryModalProps {
   open: boolean;
@@ -21,10 +21,20 @@ interface ItineraryModalProps {
 // Type icons and labels
 const typeConfig = {
   flight: { icon: Plane, label: "Flight", color: "text-blue-600" },
-  stay: { icon: Bed, label: "Accommodation", color: "text-green-600" },
+  transport: { icon: Train, label: "Transport", color: "text-indigo-600" },
+  accommodation: { icon: Bed, label: "Stay", color: "text-green-600" },
+  meal: { icon: Utensils, label: "Dining", color: "text-orange-600" },
   activity: { icon: MapPin, label: "Activity", color: "text-purple-600" },
-  food: { icon: Coffee, label: "Food & Dining", color: "text-orange-600" },
-  note: { icon: StickyNote, label: "Note", color: "text-gray-600" },
+  landmark: { icon: Camera, label: "Landmark", color: "text-amber-600" },
+  event: { icon: Calendar, label: "Event", color: "text-red-600" },
+  local_transport: { icon: Car, label: "Local", color: "text-slate-600" },
+  shopping: { icon: ShoppingBag, label: "Shopping", color: "text-pink-600" },
+  outdoor: { icon: TreePine, label: "Outdoor", color: "text-emerald-600" },
+  museum: { icon: Building, label: "Museum", color: "text-yellow-600" },
+  wellness: { icon: Heart, label: "Wellness", color: "text-rose-600" },
+  social: { icon: Users, label: "Social", color: "text-teal-600" },
+  free_time: { icon: Clock, label: "Free", color: "text-gray-600" },
+  checkin: { icon: CheckCircle, label: "Check-in", color: "text-cyan-600" },
 };
 
 const currencies = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY"];
@@ -229,16 +239,16 @@ export default function ItineraryModal({ open, onClose, defaultDate, defaultDate
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, type: type as any }))}
                       className={`
-                        relative p-3 rounded-lg border transition-all duration-200
-                        flex flex-col items-center gap-2 text-xs font-medium min-h-[70px]
+                        relative p-2 rounded-lg border transition-all duration-200
+                        flex flex-col items-center gap-1 text-xs font-medium min-h-[55px]
                         ${formData.type === type 
                           ? 'border-blue-500 bg-blue-50 text-blue-700' 
                           : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
                         }
                       `}
                     >
-                      <Icon className={`h-5 w-5 ${formData.type === type ? 'text-blue-600' : 'text-gray-400'}`} />
-                      <span className="text-center leading-tight">{config.label}</span>
+                      <Icon className={`h-4 w-4 ${formData.type === type ? 'text-blue-600' : 'text-gray-400'}`} />
+                      <span className="text-center leading-tight text-[11px] font-medium">{config.label}</span>
                       {formData.type === type && (
                         <div className="absolute inset-0 rounded-lg ring-2 ring-blue-500 ring-opacity-50" />
                       )}

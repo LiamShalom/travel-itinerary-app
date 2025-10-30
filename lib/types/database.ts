@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type ItineraryItemType = "flight" | "stay" | "activity" | "food" | "note";
+export type ItineraryItemType = "flight" | "transport" | "accommodation" | "meal" | "activity" | "landmark" | "event" | "local_transport" | "shopping" | "outdoor" | "museum" | "wellness" | "social" | "free_time" | "checkin";
 
 export interface User {
   id: string;
