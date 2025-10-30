@@ -127,6 +127,13 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
     }, 100);
   }, [router]);
 
+  // Handle item updates from drag and drop
+  const handleUpdateItem = useCallback(async (itemId: string, updates: Partial<ItineraryItem>) => {
+    // The calendar component already handles the database update
+    // We just need to refresh the page data
+    router.refresh();
+  }, [router]);
+
   // Group itinerary items by date
   const groupedItems = itineraryItems.reduce((groups, item) => {
     const date = new Date(item.start_time).toDateString();
@@ -184,81 +191,8 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
                 onEditItem={handleEditItineraryItem}
                 onDeleteItem={handleDeleteItineraryItem}
                 onAddItem={handleAddItineraryFromCalendar}
+                onUpdateItem={handleUpdateItem}
               />
-            </div>
-
-            {/* Itinerary Items List */}
-            <div>
-              <h4 className="text-md font-semibold mb-4">Detailed Itinerary</h4>
-              
-              {itineraryItems.length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(groupedItems).map(([date, items]) => (
-                    <div key={date} className="modern-card p-4">
-                      <h5 className="font-semibold text-gray-900 mb-3">
-                        {new Date(date).toLocaleDateString(undefined, { 
-                          weekday: 'long', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </h5>
-                      <div className="space-y-2">
-                        {items.map((item) => {
-                          const typeConfig = typeIcons[item.type];
-                          const TypeIcon = typeConfig.icon;
-                          
-                          return (
-                            <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 group">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <TypeIcon className={`h-4 w-4 ${typeConfig.color} flex-shrink-0`} />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium truncate">{item.title}</span>
-                                    {item.cost && (
-                                      <span className="text-sm text-gray-500 flex items-center gap-1 flex-shrink-0">
-                                        <DollarSign className="h-3 w-3" />
-                                        {item.cost.toFixed(0)}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {item.location && (
-                                    <p className="text-sm text-gray-500 truncate">{item.location}</p>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditItineraryItem(item)}
-                                  className="hover:bg-blue-50 h-7 w-7 p-0 flex-shrink-0"
-                                >
-                                  <Edit className="h-3 w-3 text-blue-500" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteItineraryItem(item.id)}
-                                  className="hover:bg-red-50 h-7 w-7 p-0 flex-shrink-0"
-                                >
-                                  <Trash2 className="h-3 w-3 text-red-500" />
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="modern-card p-6 text-center">
-                  <Calendar className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No detailed items yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Use the calendar above to view your trip timeline, or add specific activities below</p>
-                </div>
-              )}
             </div>
           </div>
         )}
