@@ -5,7 +5,7 @@ import { Trip, ItineraryItem, Subtrip } from "@/lib/types/database";
 import CalendarView from "@/components/calendar/calendar-view";
 import SubtripModal from "@/components/modals/subtrip-modal";
 import ItineraryModal from "@/components/modals/itinerary-modal";
-import { Plus, MapPin, Trash2, Edit, Calendar, Clock, DollarSign, Plane, Bed, Coffee, StickyNote, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar as CalendarIcon, TreePine, Heart, CheckCircle } from "lucide-react";
+import { Plus, MapPin, Trash2, Edit, Calendar, Clock, DollarSign, Plane, Bed, Coffee, StickyNote, Car, ShoppingBag, Building, Users, Ticket, Train, Utensils, Camera, Calendar as CalendarIcon, TreePine, Heart, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useTripContext } from "@/contexts/trip-context";
@@ -50,6 +50,7 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   const [defaultModalDate, setDefaultModalDate] = useState<Date>(new Date(trip.start_date));
   const [defaultModalDateString, setDefaultModalDateString] = useState<string>("");
   const [defaultModalSubtrip, setDefaultModalSubtrip] = useState<Subtrip | undefined>();
+  const [expandedBudgetGroups, setExpandedBudgetGroups] = useState<Set<string>>(new Set());
   const { subtrips, removeSubtrip } = useTripContext();
   const router = useRouter();
 
@@ -157,6 +158,36 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   const totalCost = itineraryItems.reduce((sum, item) => {
     return sum + (item.cost || 0);
   }, 0);
+
+  // Group budget items by type
+  const budgetItemsByType = itineraryItems
+    .filter(item => item.cost)
+    .reduce((groups, item) => {
+      const type = item.type;
+      if (!groups[type]) {
+        groups[type] = [];
+      }
+      groups[type].push(item);
+      return groups;
+    }, {} as Record<string, ItineraryItem[]>);
+
+  // Calculate totals by type
+  const typeTotals = Object.entries(budgetItemsByType).map(([type, items]) => ({
+    type,
+    items,
+    total: items.reduce((sum, item) => sum + (item.cost || 0), 0),
+    count: items.length
+  })).sort((a, b) => b.total - a.total);
+
+  const toggleBudgetGroup = (type: string) => {
+    const newExpanded = new Set(expandedBudgetGroups);
+    if (newExpanded.has(type)) {
+      newExpanded.delete(type);
+    } else {
+      newExpanded.add(type);
+    }
+    setExpandedBudgetGroups(newExpanded);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -347,33 +378,63 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
               )}
             </div>
             
-            {itineraryItems.filter(item => item.cost).length > 0 ? (
+            {typeTotals.length > 0 ? (
               <div className="space-y-3">
-                {itineraryItems
-                  .filter(item => item.cost)
-                  .map((item) => {
-                    const typeConfig = typeIcons[item.type];
-                    const TypeIcon = typeConfig.icon;
-                    
-                    return (
-                      <div key={item.id} className="modern-card p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <TypeIcon className={`h-5 w-5 ${typeConfig.color}`} />
-                            <div>
-                              <h5 className="font-medium">{item.title}</h5>
-                              <p className="text-sm text-gray-500">
-                                {new Date(item.start_time).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-lg font-semibold">
-                            ${item.cost?.toFixed(2)} {item.currency || 'USD'}
+                {typeTotals.map(({ type, items, total, count }) => {
+                  const typeConfig = typeIcons[type as keyof typeof typeIcons] || typeIcons.activity;
+                  const TypeIcon = typeConfig.icon;
+                  const isExpanded = expandedBudgetGroups.has(type);
+                  
+                  return (
+                    <div key={type} className="modern-card overflow-hidden">
+                      <button
+                        onClick={() => toggleBudgetGroup(type)}
+                        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <TypeIcon className={`h-5 w-5 ${typeConfig.color}`} />
+                          <div className="text-left">
+                            <h5 className="font-medium capitalize">{type.replace('_', ' ')}</h5>
+                            <p className="text-sm text-gray-500">
+                              {count} item{count !== 1 ? 's' : ''}
+                            </p>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                        <div className="flex items-center gap-3">
+                          <div className="text-lg font-semibold">
+                            ${total.toFixed(2)}
+                          </div>
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="border-t bg-gray-50">
+                          {items.map((item) => (
+                            <div key={item.id} className="px-4 py-3 border-b last:border-b-0 bg-white">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h6 className="font-medium text-sm">{item.title}</h6>
+                                  <p className="text-xs text-gray-500">
+                                    {new Date(item.start_time).toLocaleDateString()}
+                                    {item.location && ` • ${item.location}`}
+                                  </p>
+                                </div>
+                                <div className="text-sm font-semibold">
+                                  ${item.cost?.toFixed(2)} {item.currency || 'USD'}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="modern-card p-8 text-center">
