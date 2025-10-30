@@ -31,9 +31,10 @@ interface CalendarViewProps {
   onDeleteItem?: (itemId: string) => void;
   onAddItem?: (dateString: string, subtrip?: Subtrip) => void;
   onUpdateItem?: (itemId: string, updates: Partial<ItineraryItem>) => void;
+  onDayClick?: (date: Date) => void;
 }
 
-export default function CalendarView({ trips, itineraryItems, subtrips = [], onEditItem, onDeleteItem, onAddItem, onUpdateItem }: CalendarViewProps) {
+export default function CalendarView({ trips, itineraryItems, subtrips = [], onEditItem, onDeleteItem, onAddItem, onUpdateItem, onDayClick }: CalendarViewProps) {
   const localizer = useMemo(() => {
     return momentLocalizer(moment);
   }, []);
@@ -70,7 +71,6 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
   
   const [showTripModal, setShowTripModal] = useState(false);
   const [currentDate, setCurrentDate] = useState(initialDate);
-  const [currentView, setCurrentView] = useState<View>('month');
   const [dateInitialized, setDateInitialized] = useState(false);
   const calendarWrapperRef = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -205,41 +205,30 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
     setCurrentDate(newDate);
   };
 
-  const handleViewChange = (newView: View) => {
-    setCurrentView(newView);
-  };
-
   const handleSelectSlot = (slotInfo: { start: Date; end: Date; slots: Date[]; action: string }) => {
     // If user clicks on a day (not dragging/selecting multiple days)
     if (slotInfo.action === 'click' || slotInfo.action === 'select') {
-      // Navigate to the clicked date
-      setCurrentDate(slotInfo.start);
-      // Switch to day view
-      setCurrentView('day');
+      // Check if the clicked date is part of a trip (has location data)
+      const dateStr = moment(slotInfo.start).format('YYYY-MM-DD');
+      const locationData = dateLocationMap.get(dateStr);
+      
+      // Only navigate if the day is part of a trip
+      if (locationData && onDayClick) {
+        // Navigate to the clicked date
+        setCurrentDate(slotInfo.start);
+        // Call onDayClick to navigate to itinerary tab
+        onDayClick(slotInfo.start);
+      }
     }
   };
 
   const navigatePrevious = () => {
-    let newDate;
-    if (currentView === 'month') {
-      newDate = moment(currentDate).subtract(1, 'month').toDate();
-    } else if (currentView === 'week') {
-      newDate = moment(currentDate).subtract(1, 'week').toDate();
-    } else {
-      newDate = moment(currentDate).subtract(1, 'day').toDate();
-    }
+    const newDate = moment(currentDate).subtract(1, 'month').toDate();
     setCurrentDate(newDate);
   };
 
   const navigateNext = () => {
-    let newDate;
-    if (currentView === 'month') {
-      newDate = moment(currentDate).add(1, 'month').toDate();
-    } else if (currentView === 'week') {
-      newDate = moment(currentDate).add(1, 'week').toDate();
-    } else {
-      newDate = moment(currentDate).add(1, 'day').toDate();
-    }
+    const newDate = moment(currentDate).add(1, 'month').toDate();
     setCurrentDate(newDate);
   };
 
@@ -263,10 +252,7 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
             <ChevronLeft className={styles.navIcon} />
           </button>
           <h3 className={styles.toolbarTitle}>
-            {currentView === 'week'
-              ? `${moment(currentDate).startOf('week').format('MMM D')} - ${moment(currentDate).endOf('week').format('MMM D, YYYY')}`
-              : moment(currentDate).format('MMMM YYYY')
-            }
+            {moment(currentDate).format('MMMM YYYY')}
           </h3>
           <button
             onClick={navigateNext}
@@ -276,31 +262,12 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
             <ChevronRight className={styles.navIcon} />
           </button>
         </div>
-
-        {/* View Tabs */}
-        <div className={styles.tabsContainer}>
-          <button
-            onClick={() => setCurrentView('month')}
-            className={`${styles.tab} ${styles.tabActive}`}
-          >
-            Calendar
-            <div className={styles.tabIndicator} />
-          </button>
-        </div>
       </div>
     );
   };
 
-  // Only show events in week view, not in month view to avoid cluttered awards
-  const events = currentView === 'week' ? [
-    ...localItineraryItems.map((item) => ({
-      id: item.id,
-      title: `${item.type}: ${item.title}`,
-      start: new Date(item.start_time),
-      end: item.end_time ? new Date(item.end_time) : new Date(item.start_time),
-      resource: { type: "item", data: item },
-    })),
-  ] : [];
+  // No events in month view to avoid clutter - events are shown via day styling instead
+  const events: any[] = [];
 
   // Create a map of locations to their custom colors
   const locationColorMap = useMemo(() => {
@@ -429,7 +396,10 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
           fontWeight: 'bold' as const,
           color: '#000', // Ensure text is readable
           position: 'relative' as const,
+          cursor: 'pointer', // Make trip days clickable
+          transition: 'all 0.2s ease', // Smooth hover transition
         },
+        className: 'trip-day-clickable', // Add a class for potential additional styling
         children: (
           <div 
             style={{
@@ -1006,7 +976,7 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div ref={calendarWrapperRef}>
+      <div ref={calendarWrapperRef} className={styles.calendarWrapper}>
         <CustomToolbar />
         
         <Calendar
@@ -1018,7 +988,6 @@ export default function CalendarView({ trips, itineraryItems, subtrips = [], onE
           date={currentDate}
           view="month"
           onNavigate={handleNavigate}
-          onView={handleViewChange}
           onSelectSlot={handleSelectSlot}
           selectable
           eventPropGetter={eventStyleGetter}

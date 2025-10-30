@@ -45,6 +45,7 @@ const typeIcons = {
 
 export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("itinerary");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showSubtripModal, setShowSubtripModal] = useState(false);
   const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [editingSubtrip, setEditingSubtrip] = useState<Subtrip | undefined>();
@@ -81,6 +82,12 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
     setDefaultModalDateString(dateString);
     setDefaultModalSubtrip(subtrip);
     setShowItineraryModal(true);
+  };
+
+  const handleDayClickFromCalendar = (date: Date) => {
+    // Switch to itinerary tab and scroll to the selected date
+    setSelectedDate(date);
+    setActiveTab("timeline");
   };
 
   const handleEditItineraryItem = (item: ItineraryItem) => {
@@ -226,6 +233,7 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
               onDeleteItem={handleDeleteItineraryItem}
               onAddItem={handleAddItineraryFromCalendar}
               onUpdateItem={handleUpdateItem}
+              onDayClick={handleDayClickFromCalendar}
             />
           </div>
         )}
@@ -247,6 +255,7 @@ export default function TripTabs({ trip, itineraryItems }: TripTabsProps) {
               onDeleteItem={handleDeleteItineraryItem}
               onAddItem={handleAddItineraryFromCalendar}
               onUpdateItem={handleUpdateItem}
+              selectedDate={selectedDate}
             />
           </div>
         )}

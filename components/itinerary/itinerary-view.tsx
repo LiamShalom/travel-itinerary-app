@@ -40,6 +40,7 @@ interface ItineraryViewProps {
   onDeleteItem?: (itemId: string) => void;
   onAddItem?: (dateString: string, subtrip?: Subtrip) => void;
   onUpdateItem?: (itemId: string, updates: Partial<ItineraryItem>) => void;
+  selectedDate?: Date | null;
 }
 
 export default function ItineraryView({
@@ -50,6 +51,7 @@ export default function ItineraryView({
   onDeleteItem,
   onAddItem,
   onUpdateItem,
+  selectedDate,
 }: ItineraryViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<ItineraryItem | null>(null);
@@ -226,6 +228,17 @@ export default function ItineraryView({
       }
     }, []);
 
+    // Scroll to selected date when it changes
+    useEffect(() => {
+      if (selectedDate) {
+        const selectedDateString = moment(selectedDate).format('YYYY-MM-DD');
+        const selectedElement = document.getElementById(`day-${selectedDateString}`);
+        if (selectedElement) {
+          selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }, [selectedDate]);
+
     return (
       <div className={styles.weekView}>
         <div className={styles.weekViewContent}>
@@ -269,7 +282,7 @@ export default function ItineraryView({
             return (
               <DroppableDay key={day.format('YYYY-MM-DD')} dayId={`day-${day.format('YYYY-MM-DD')}`}>
                 <div 
-                  id={isRecentItemDay ? 'recent-item-marker' : undefined}
+                  id={`day-${day.format('YYYY-MM-DD')}`}
                   className={`${styles.dayCard} ${
                     isToday
                       ? styles.dayCardCurrent
